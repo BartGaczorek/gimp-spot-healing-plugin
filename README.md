@@ -1,0 +1,1 @@
+# gimp-spot-healing-plugin
