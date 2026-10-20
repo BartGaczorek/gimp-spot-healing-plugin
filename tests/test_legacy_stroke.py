@@ -1,6 +1,5 @@
 """Legacy controller regression tests; GTK and native Healing are test doubles."""
 import os
-import runpy
 import sys
 import types
 import unittest
@@ -40,7 +39,10 @@ class LegacyStrokeTests(unittest.TestCase):
         saved = dict((key, sys.modules.get(key)) for key in stubs)
         try:
             sys.modules.update(stubs)
-            module = runpy.run_path(os.path.join(ROOT, "legacy", "spot-heal-210.py"))
+            path = os.path.join(ROOT, "legacy", "spot-heal-210.py")
+            module = {"__name__": "spot_heal_test", "__file__": path}
+            with open(path, "rb") as stream:
+                eval(compile(stream.read(), path, "exec"), module)
         finally:
             for key, value in saved.items():
                 if value is None:
