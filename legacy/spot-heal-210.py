@@ -133,7 +133,6 @@ class LegacySession(object):
         screen = self.dialog.get_screen()
         self.dialog.set_default_size(min(1040, int(screen.get_width() * 0.85)),
                                      min(740, int(screen.get_height() * 0.85)))
-        gimpui.window_set_transient(self.dialog)
         toolbar = gtk.HBox(False, 8)
         toolbar.set_border_width(8)
         self.dialog.vbox.pack_start(toolbar, False, False)
