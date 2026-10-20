@@ -4,7 +4,7 @@ Eksperymentalna wtyczka do retuszu drobnych skaz jednym kliknięciem.
 Źródło jest dobierane automatycznie z otoczenia, a naprawę wykonuje **Healing
 GIMP-a** — z dopasowaniem przejścia, zamiast prostego wklejania pikseli.
 
-## Status: prototyp 0.2 — warianty dla GIMP-a 2.10 i 3
+## Status: prototyp 0.3 — próbkowanie prostopadłe w GIMP-ie 2.10
 
 | GIMP | Plik / folder | Wymagania |
 | --- | --- | --- |
@@ -17,6 +17,14 @@ wywołania GIMP/GEGL i jakość retuszu wymagają jeszcze sprawdzenia w działaj
 GIMP-ie; nie zostały przetestowane w środowisku, w którym powstała ta wersja.
 Kontrole Pythona 2.7 sprawdzają algorytm i składnię; nie emulują Windows, PyGTK
 ani samego GIMP-a.
+
+## Gałąź `feature/perpendicular-sources`
+
+Zmiany w tej gałęzi dotyczą wariantu **GIMP 2.10.36 / Windows**. Dla linii źródło
+jest wybierane wyłącznie w kierunku prostopadłym do wektora od początku do końca
+ruchu. Dodano przycisk **Zmien strone**, działający na ostatnią naprawę, jeśli jest
+ona linią i po przeciwnej stronie istnieje bezpieczne źródło. Wariant GIMP 3
+zachowuje dotychczasowy dobór źródła w wielu kierunkach.
 
 ## Instalacja: GIMP 2.10.36 na Windows
 
@@ -87,6 +95,7 @@ warstwy, a nie kompozycję wszystkich warstw.
 | Widok całego zdjęcia | Dopasuj; początkowy widok, bez powiększania małych zdjęć |
 | Oryginalny rozmiar pikseli | 100% |
 | Cofnięcie kliknięcia lub całego ruchu | Cofnij / Ctrl+Z |
+| Przełączenie źródła ostatniej linii (2.10) | Zmien strone; można przełączać wielokrotnie |
 | Zachowanie retuszu | Zastosuj; kopia zostaje w dokumencie |
 | Odrzucenie sesji | Anuluj / zamknięcie okna; kopia jest usuwana |
 
@@ -94,29 +103,65 @@ Ustaw pędzel tylko trochę większy od skazy. Włos zamaluj krótkim ruchem
 wzdłuż jego przebiegu. Zbyt duży pędzel lub zbyt długi ruch utrudniają znalezienie
 pasującego źródła. Nie ma automatycznego wykrywania całego włosa po jednym kliknięciu.
 
-## Jak działa wersja 0.1
+## Dobór źródła w wariancie 2.10
 
-1. Otacza wskazany obszar granicą próbkowania; wnętrze skazy nie jest używane do
-   porównywania źródeł.
-2. Sprawdza do 160 przesunięć w odległości do sześciu średnic pędzla. Cały
-   prostokąt potencjalnego źródła musi być rozłączny z prostokątem naprawy.
-3. Porównuje próbki otoczenia, uwzględniając różnicę koloru i dopasowanie tekstury
-   po odjęciu stałej różnicy jasności/koloru. Odrzuca próbkowaną przezroczystość.
-4. Wywołuje natywny Healing z wybranym źródłem. Krótki ruch zachowuje jeden
-   offset źródła na całej długości. Wariant 2.10 dzieli ścieżkę na zachodzące
-   na siebie odbicia pędzla (odstęp do 20% średnicy, minimum 1 px) i wywołuje
-   Healing osobno dla każdego z nich. Nie polega na interpolacji wielopunktowego
-   wywołania PDB. Cały ruch ma jeden zapis cofania; błąd pojedynczej naprawy
-   odtwarza stan sprzed ruchu. Limit to 4096 odbić na ruch.
-5. W GIMP-ie 3 cofnięcie odtwarza piksele zapisane w formacie warstwy, bez
-   sprowadzania ich do 8 bitów. W GIMP-ie 2.10 obsługiwane są wyłącznie obrazy
-   8-bit sRGB, aby zapis i odtworzenie przez PixelRgn nie traciły precyzji.
-   W obu wariantach samą naprawę wykonuje natywny Healing.
+**Pojedynczy klik** zachowuje dotychczasowy dobór źródła wokół punktu.
 
-To heurystyczny dobór próbki, a nie semantyczne rozpoznawanie obrazu. Może wybrać
-nieodpowiednią teksturę obok krawędzi, innych skaz lub skomplikowanych wzorów.
-Wtedy cofnij i spróbuj mniejszego pędzla / krótszego ruchu. Algorytm nie obiecuje
-usunięcia każdej skazy ani automatycznego zabezpieczenia wszystkich detali.
+**Linia** ma jeden kierunek od początku do końca ruchu. Program wyznacza do niego
+prostopadłą i sprawdza kilka odległości po obu stronach. Dla poziomej linii źródło
+leży wyłącznie nad nią lub pod nią; dla pionowej — wyłącznie po lewej lub prawej.
+Każda strona ma własną najlepiej dopasowaną bezpieczną odległość. Pierwsza naprawa
+wybiera stronę o niższym wyniku porównania otoczenia.
+
+Kierunek i przesunięcie są stałe dla wszystkich punktów linii, również gdy ruch
+jest łagodnie zakrzywiony. Nie wyznaczamy osobnej normalnej dla każdego punktu.
+Pętla lub ruch z końcem bliżej niż 1 px od początku jest odrzucany.
+
+### Wykluczenie obszaru naprawy
+
+Program rzutuje całą ścieżkę na prostopadłą. Pas obejmujący przesuniętą ścieżkę
+źródła musi być rozłączny z pasem naprawy, po uwzględnieniu promienia pędzla,
+marginesu 2 px z każdej strony oraz zaokrąglania współrzędnych źródła w GIMP-ie.
+Rzut odcinka mieści się między rzutami jego końców, więc test obejmuje także
+obszar między zarejestrowanymi punktami. Chroni to całą powierzchnię prowadzonego
+pędzla, a nie tylko środki odbić.
+
+Test jest zachowawczy: przy mocnym zakrzywieniu może odrzucić również ścieżki,
+które w rzeczywistości się nie przecinają. Bezpieczna próbka musi też mieścić
+się w warstwie. Jeśli żadna strona nie spełnia warunków, obraz pozostaje bez zmian
+i pojawia się komunikat o skróceniu linii / zmniejszeniu pędzla.
+
+Dopasowanie tekstury ocenia 48 próbek na granicy prostokąta otaczającego ruch.
+Porównywane są lokalne różnice koloru po odjęciu stałego przesunięcia kolorów,
+z dodatkową karą za dużą różnicę koloru i odległość. Próbkowana przezroczystość
+jest odrzucana. To heurystyka, a nie rozpoznawanie innych skaz.
+
+### Zmien strone
+
+Przycisk odtwarza stan sprzed ostatniej linii i wykonuje tę samą ścieżkę z próbką
+po przeciwnej stronie. Odległości po obu stronach mogą się różnić, ponieważ dla
+każdej strony wybierane jest najlepiej dopasowane bezpieczne źródło.
+
+- Ponowne kliknięcie wraca do poprzedniej strony.
+- Zachowana jest średnica pędzla użyta przy rysowaniu, nawet po zmianie pola rozmiaru.
+- Wcześniejsze naprawy pozostają zachowane.
+- Przełączenia nie tworzą osobnych wpisów cofania: Ctrl+Z usuwa całą ostatnią linię.
+- Błąd podczas przełączania przywraca poprzedni wynik i poprzednio wybraną stronę.
+- Po pojedynczym kliknięciu oraz przy braku źródła po drugiej stronie przycisk
+  jest nieaktywny. Cofnięcie kliknięcia może ponownie udostępnić zmianę strony
+  poprzedniej linii.
+- Funkcja działa na ostatniej operacji; nie wybiera starszej linii spod kolejnych napraw.
+
+Linia jest wykonywana jako zachodzące na siebie punkty natywnego Healing,
+w odstępach do 20% średnicy (minimum 1 px), z limitem 4096 odbić. Nie stosujemy
+dodatkowego low-passu. Obraz sprzed i po naprawie jest przechowywany w historii
+8-bitowego wariantu 2.10; obie kopie liczą się do budżetu 128 MiB.
+
+## Wariant GIMP 3
+
+Zachowuje wyszukiwanie do 160 przesunięć wokół ruchu, z rozłącznymi prostokątami
+źródła i naprawy. Nie ma przycisku zmiany strony. Naprawę wykonuje `Gimp.heal`,
+a kopie do cofania są zapisywane w formacie warstwy, bez redukcji precyzji do 8 bitów.
 
 ## Ograniczenia prototypu
 
@@ -140,7 +185,9 @@ usunięcia każdej skazy ani automatycznego zabezpieczenia wszystkich detali.
 
 Sprawdź na kopii zdjęcia: jasny punkt na gładkim tle, kurz na fakturze, krótki
 włos, skazę przy krawędzi obiektu; obejrzyj wynik przy 100%. Sprawdź też pojedyncze
-cofnięcie, cofnięcie całego ruchu, Anuluj i Zastosuj. Potem sprawdź zdjęcie 16-bitowe
+cofnięcie, cofnięcie całego ruchu, Anuluj i Zastosuj. W wariancie 2.10 sprawdź
+poziomą, pionową i ukośną rysę, kilkukrotne Zmien strone, cofnięcie po przełączeniu,
+linię przy brzegu zdjęcia oraz zmianę średnicy przed przełączeniem. Potem sprawdź zdjęcie 16-bitowe
 i komunikat o braku obsługi warstwy przesuniętej względem płótna. Wariant 2.10
 powinien odrzucić zdjęcie 16-bitowe, a wariant 3 obsługuje je bez zmiany precyzji.
 
