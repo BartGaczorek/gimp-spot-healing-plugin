@@ -187,6 +187,7 @@ class LegacySession(object):
     def repair(self, points):
         snapshot = None
         try:
+            dabs = resample_stroke(points, max(1.0, self.diameter * 0.2))
             dx, dy = choose_source(self.pixels, self.width, self.height, points, self.diameter)
             bounds = stroke_bounds(points, self.diameter, self.width, self.height)
             if bounds[2] * bounds[3] * self.layer.bpp > MAX_HISTORY:
@@ -205,9 +206,11 @@ class LegacySession(object):
                 pdb.gimp_context_set_opacity(100)
                 pdb.gimp_context_set_paint_mode(NORMAL_MODE)
                 pdb.gimp_context_set_sample_merged(False)
-                strokes = [v for point in points for v in point]
-                pdb.gimp_heal(self.layer, self.layer, points[0][0] + dx,
-                              points[0][1] + dy, len(strokes), strokes)
+                # Each dab explicitly supplies its own donor. This avoids
+                # relying on multi-point interpolation in the legacy PDB.
+                for x, y in dabs:
+                    pdb.gimp_heal(self.layer, self.layer, x + dx, y + dy,
+                                  2, [x, y])
             finally:
                 pdb.gimp_context_pop()
             self.refresh()

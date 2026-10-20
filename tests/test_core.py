@@ -3,7 +3,7 @@ import os
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gimp-spot-heal"))
-from spot_core import Viewport, choose_source, stroke_bounds
+from spot_core import Viewport, choose_source, stroke_bounds, resample_stroke
 
 
 def image(width=200, height=200):
@@ -68,6 +68,30 @@ class SourceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             choose_source(pixels, 200, 200, [(2, 2)], 10)
         self.assertEqual(pixels, before)
+
+
+
+class ResampleTests(unittest.TestCase):
+    def test_fast_drag_has_no_uncovered_gaps(self):
+        points = resample_stroke([(10, 20), (90, 20)], 2)
+        self.assertEqual(points[0], (10, 20))
+        self.assertEqual(points[-1], (90, 20))
+        self.assertGreater(len(points), 2)
+        for a, b in zip(points, points[1:]):
+            self.assertLessEqual(((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5, 2.000001)
+
+    def test_curve_keeps_corner_and_last_point(self):
+        points = resample_stroke([(0, 0), (20, 0), (20, 30)], 3)
+        self.assertIn((20, 0), points)
+        self.assertEqual(points[-1], (20, 30))
+        self.assertTrue(all(x == 20 or y == 0 for x, y in points))
+
+    def test_single_click_stays_single(self):
+        self.assertEqual(resample_stroke([(2, 3), (2, 3)], 1), [(2, 3)])
+
+    def test_excessive_stroke_is_rejected_before_painting(self):
+        with self.assertRaises(ValueError):
+            resample_stroke([(0, 0), (1000, 0)], 1, max_points=10)
 
 
 if __name__ == "__main__":

@@ -102,8 +102,12 @@ pasującego źródła. Nie ma automatycznego wykrywania całego włosa po jednym
    prostokąt potencjalnego źródła musi być rozłączny z prostokątem naprawy.
 3. Porównuje próbki otoczenia, uwzględniając różnicę koloru i dopasowanie tekstury
    po odjęciu stałej różnicy jasności/koloru. Odrzuca próbkowaną przezroczystość.
-4. Wywołuje natywne `Gimp.heal` z wybranym źródłem. Krótki ruch zachowuje jeden
-   offset źródła na całej długości, aby ograniczyć niespójności między punktami.
+4. Wywołuje natywny Healing z wybranym źródłem. Krótki ruch zachowuje jeden
+   offset źródła na całej długości. Wariant 2.10 dzieli ścieżkę na zachodzące
+   na siebie odbicia pędzla (odstęp do 20% średnicy, minimum 1 px) i wywołuje
+   Healing osobno dla każdego z nich. Nie polega na interpolacji wielopunktowego
+   wywołania PDB. Cały ruch ma jeden zapis cofania; błąd pojedynczej naprawy
+   odtwarza stan sprzed ruchu. Limit to 4096 odbić na ruch.
 5. W GIMP-ie 3 cofnięcie odtwarza piksele zapisane w formacie warstwy, bez
    sprowadzania ich do 8 bitów. W GIMP-ie 2.10 obsługiwane są wyłącznie obrazy
    8-bit sRGB, aby zapis i odtworzenie przez PixelRgn nie traciły precyzji.

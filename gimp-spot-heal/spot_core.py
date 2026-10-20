@@ -99,3 +99,23 @@ def choose_source(pixels, width, height, points, diameter):
     if best is None:
         raise ValueError("Brak odpowiedniego źródła w otoczeniu. Zmniejsz pędzel lub skróć ruch.")
     return best[1], best[2]
+
+
+def resample_stroke(points, spacing, max_points=4096):
+    """Cover every segment, including its end, with dabs no farther than spacing."""
+    if not points or spacing <= 0 or max_points < 1:
+        raise ValueError("Invalid stroke or spacing")
+    result = [points[0]]
+    for end in points[1:]:
+        start = result[-1]
+        length = math.hypot(end[0] - start[0], end[1] - start[1])
+        if length == 0:
+            continue
+        steps = int(math.ceil(length / spacing))
+        if len(result) + steps > max_points:
+            raise ValueError("Ruch jest zbyt dlugi. Podziel go na krotsze odcinki.")
+        for i in range(1, steps + 1):
+            t = i / steps
+            result.append((start[0] + (end[0] - start[0]) * t,
+                           start[1] + (end[1] - start[1]) * t))
+    return result
