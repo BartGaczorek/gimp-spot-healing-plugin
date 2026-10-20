@@ -1,8 +1,8 @@
 import sys
+import os
 import unittest
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "gimp-spot-heal"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gimp-spot-heal"))
 from spot_core import Viewport, choose_source, stroke_bounds
 
 
@@ -42,7 +42,7 @@ class SourceTests(unittest.TestCase):
         for y in range(96, 105):
             for x in range(96, 105):
                 i = (y * 200 + x) * 4
-                pixels[i:i + 4] = bytes([255, 0, 255, 255])
+                pixels[i:i + 4] = bytearray([255, 0, 255, 255])
         self.assertEqual(before, choose_source(pixels, 200, 200, [(100, 100)], 10))
 
     def test_avoids_contrasting_half_of_image(self):
@@ -50,7 +50,7 @@ class SourceTests(unittest.TestCase):
         for y in range(200):
             for x in range(108, 200):
                 i = (y * 200 + x) * 4
-                pixels[i:i + 4] = bytes([0, 0, 0, 255])
+                pixels[i:i + 4] = bytearray([0, 0, 0, 255])
         dx, _ = choose_source(pixels, 200, 200, [(100, 100)], 10)
         self.assertLessEqual(dx, 0)
 

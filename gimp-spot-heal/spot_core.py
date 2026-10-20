@@ -1,15 +1,13 @@
-"""Source selection and viewport geometry; no GIMP or third-party dependencies."""
+# -*- coding: utf-8 -*-
+"""Source selection and viewport geometry; compatible with Python 2.7 and 3."""
+from __future__ import division
 import math
-from dataclasses import dataclass
 
 
-@dataclass
-class Viewport:
-    width: int
-    height: int
-    zoom: float = 1.0
-    x: float = 0.0
-    y: float = 0.0
+class Viewport(object):
+    def __init__(self, width, height, zoom=1.0, x=0.0, y=0.0):
+        self.width, self.height = width, height
+        self.zoom, self.x, self.y = zoom, x, y
 
     def fit(self, canvas_width, canvas_height):
         self.zoom = min(1.0, max(0.01, min(canvas_width / self.width,
@@ -32,7 +30,7 @@ def stroke_bounds(points, diameter, width, height):
     y = max(0, math.floor(min(p[1] for p in points)) - margin)
     right = min(width, math.ceil(max(p[0] for p in points)) + margin + 1)
     bottom = min(height, math.ceil(max(p[1] for p in points)) + margin + 1)
-    return x, y, right - x, bottom - y
+    return tuple(int(v) for v in (x, y, right - x, bottom - y))
 
 
 def choose_source(pixels, width, height, points, diameter):
@@ -73,9 +71,9 @@ def choose_source(pixels, width, height, points, diameter):
     # outside one brush diameter, outer rings up to six diameters away.
     for distance in (1.3, 2.0, 3.0, 4.5, 6.0):
         for angle in range(32):
-            theta = angle * math.tau / 32
-            dx = round(math.cos(theta) * max(4, diameter) * distance)
-            dy = round(math.sin(theta) * max(4, diameter) * distance)
+            theta = angle * (2 * math.pi) / 32
+            dx = int(round(math.cos(theta) * max(4, diameter) * distance))
+            dy = int(round(math.sin(theta) * max(4, diameter) * distance))
             if not (right + dx < left or left + dx > right or
                     bottom + dy < top or top + dy > bottom):
                 continue
