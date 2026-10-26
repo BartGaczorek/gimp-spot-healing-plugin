@@ -70,7 +70,7 @@ Nazwa pliku i polecenia są inne niż w dotychczasowym prototypie. To właśnie
 | Kolejne źródło ostatniej naprawy | Inna probka |
 | Cofnięcie całego ruchu | Cofnij / Ctrl+Z |
 | Średnica pędzla | Pole 1–128 px oryginalnego zdjęcia |
-| Powiększenie wokół kursora | Kółko, poza malowaniem |
+| Powiększenie wokół kursora | Ctrl + kółko, poza malowaniem |
 | Przesuwanie widoku | Środkowy przycisk myszy, poza malowaniem |
 | Widok całości / oryginalna skala | Dopasuj / 100% |
 | Zachowanie kopii warstwy po całej sesji | Zastosuj |
@@ -119,3 +119,10 @@ python tools/build_plugin.py --check
 Edytuj `src/mask_core.py` i `src/session_210.py`, następnie odtwórz gotowy plik
 poleceniem budowania. CI uruchamia testy na Pythonie 3.12 i 2.7 oraz sprawdza
 składnię i zgodność samodzielnego pliku ze źródłami.
+
+### Nawigacja w oknie GIMP 2.10
+
+- Kółko: przesuwanie zdjęcia góra–dół (50 pikseli ekranu na krok).
+- Ctrl + kółko: zoom względem położenia kursora.
+- Ctrl + Alt + kółko: średnica pędzla o 1 piksel zdjęcia na krok (w górę: zwiększanie).
+- Podczas malowania nawigacja kółkiem jest zablokowana.
