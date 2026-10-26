@@ -179,7 +179,7 @@ class LegacySession(object):
             self.area.connect(event, callback)
         self.dialog.connect("key-press-event", self.key)
         self.dialog.vbox.pack_start(self.area, True, True)
-        self.status = gtk.Label("LPM: naprawa / rysa | kolko: zoom | SPM: przesuwanie | Ctrl+Z: cofnij")
+        self.status = gtk.Label("LPM: naprawa / rysa | kolko: gora/dol | Ctrl+kolko: zoom | Ctrl+Alt+kolko: rozmiar | SPM: przesuwanie | Ctrl+Z: cofnij")
         self.status.set_alignment(0, 0.5)
         self.status.set_padding(8, 8)
         self.status.set_line_wrap(True)
@@ -285,10 +285,22 @@ class LegacySession(object):
         return True
 
     def scroll(self, widget, event):
-        if not self.points:
-            factor = 1.2 if event.direction == gtk.gdk.SCROLL_UP else 1 / 1.2
+        if self.points:
+            return True
+        if event.direction not in (gtk.gdk.SCROLL_UP, gtk.gdk.SCROLL_DOWN):
+            return True
+        step = 1 if event.direction == gtk.gdk.SCROLL_UP else -1
+        control = bool(event.state & gtk.gdk.CONTROL_MASK)
+        alt = bool(event.state & gtk.gdk.MOD1_MASK)
+        if control and alt:
+            # Updating the spin button also updates diameter and the brush outline.
+            self.size.set_value(max(1, min(256, self.diameter + step)))
+        elif control:
+            factor = 1.2 if step > 0 else 1 / 1.2
             self.view.zoom_at(factor, event.x, event.y)
-            widget.queue_draw()
+        else:
+            self.view.y += step * 50
+        widget.queue_draw()
         return True
 
     def leave(self, widget, event):

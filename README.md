@@ -44,7 +44,7 @@ Jeśli chcesz je przetestować, najpierw wykonaj kopię dokumentu i zmień precy
 tej kopii w menu **Obraz → Precyzja**. To ograniczenie starego wariantu, który
 używa interfejsu PixelRgn do podglądu i zapisów cofania.
 
-Sterowanie jest takie samo jak poniżej: klik / krótki ruch LPM, zoom kółkiem,
+Sterowanie jest takie samo jak poniżej: klik / krótki ruch LPM, zoom przez Ctrl + kółko,
 przesuwanie ŚPM, Cofnij / Ctrl+Z. Okno początkowo dopasowuje widok zdjęcia,
 a jego rozmiar mieści się w 85% rozdzielczości ekranu. Naprawa odbywa się na
 automatycznej kopii warstwy. W wariancie 2.10 etykiety są bez polskich znaków.
@@ -168,3 +168,10 @@ zdjęciach, potem optymalizacja podglądu i lepsza obsługa dłuższych rys.
 
 Dokumentacja: [wtyczki Python](https://developer.gimp.org/resource/writing-a-plug-in/tutorial-python/),
 [Gimp.heal](https://developer.gimp.org/api/3.0/libgimp/func.heal.html).
+
+### Nawigacja w oknie GIMP 2.10
+
+- Kółko: przesuwanie zdjęcia góra–dół (50 pikseli ekranu na krok).
+- Ctrl + kółko: zoom względem położenia kursora.
+- Ctrl + Alt + kółko: średnica pędzla o 1 piksel zdjęcia na krok (w górę: zwiększanie).
+- Podczas malowania nawigacja kółkiem jest zablokowana.
